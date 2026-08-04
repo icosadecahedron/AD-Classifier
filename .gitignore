@@ -1,0 +1,11 @@
+.venv/
+.idea/
+__pycache__/
+*.pyc
+.pytest_cache/
+.DS_Store
+
+mlflow.db
+mlruns/
+
+*.rtf

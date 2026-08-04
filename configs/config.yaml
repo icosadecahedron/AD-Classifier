@@ -1,0 +1,47 @@
+data:
+  source: "synthetic"          # "synthetic" or "geo_series_matrix"
+  geo_path: "data/raw/GSE33000_series_matrix.txt"
+  n_samples: 600
+  n_genes: 2000
+  random_seed: 42
+  label_col: "diagnosis"       #AD vs control
+
+preprocessing:
+  log_transform: true
+  standardize: true
+  variance_filter_top_n: 2000
+
+feature_selection:
+  method: "differential_expression"
+  fdr_threshold: 0.05
+  min_abs_log2fc: 0.15
+  max_features: 200
+
+models:
+  - name: "logistic_regression"
+    params:
+      C: 1.0
+      max_iter: 1000
+  - name: "random_forest"
+    params:
+      n_estimators: 300
+      max_depth: 8
+  - name: "xgboost"
+    params:
+      n_estimators: 300
+      max_depth: 4
+      learning_rate: 0.05
+
+training:
+  cv_folds: 5
+  test_size: 0.2
+  scoring: ["roc_auc", "f1", "accuracy"]
+
+mlflow:
+  experiment_name: "ad-gene-expression-classification"
+  tracking_uri: "sqlite:///mlflow.db"
+
+output:
+  model_dir: "models"
+  best_model_path: "models/best_model.joblib"
+  feature_list_path: "models/selected_genes.json"
