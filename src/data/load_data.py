@@ -24,12 +24,6 @@ logger = logging.getLogger(__name__)
 def _generate_synthetic_expression_data(
     n_samples: int, n_genes: int, seed: int
 ) -> tuple[pd.DataFrame, pd.Series]:
-    """Generate a synthetic gene expression matrix + AD/control labels.
-
-    Mimics real bulk RNA-seq/microarray structure: log-normal-ish expression,
-    a subset of genes genuinely differential between classes (so downstream
-    DE feature selection has real signal to find), plus noise genes.
-    """
     rng = np.random.default_rng(seed)
 
     labels = rng.binomial(1, 0.5, size=n_samples)  # 1 = AD, 0 = control
@@ -82,20 +76,7 @@ def _load_geo_series_matrix(path: str, label_col: str) -> tuple[pd.DataFrame, pd
 
     from io import StringIO
 
-    expr_df = pd.read_csv(StringIO("".join(table_lines)), sep="\t", index_col=0).T
-    expr_df.index.name = "sample_id"
-    expr_df = expr_df.reset_index()
 
-    # NOTE: label extraction depends on how diagnosis is encoded in the
-    # specific series' characteristics fields. Update this selector once you
-    # have the real file's metadata format.
-    char_line = next(l for l in lines if l.startswith("!Sample_characteristics_ch1") and "diagnosis" in l.lower())
-    raw_labels = char_line.strip().split("\t")[1:]
-    labels = pd.Series(
-        [1 if "alzheimer" in v.lower() or "ad" in v.lower() else 0 for v in raw_labels],
-        name=label_col,
-    )
-    return expr_df, labels
 
 
 def load_dataset(config: dict) -> tuple[pd.DataFrame, pd.Series]:
