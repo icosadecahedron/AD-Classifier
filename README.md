@@ -59,6 +59,28 @@ ad-classifier/
 ├── .github/workflows/ci.yml  # lint + test + docker build on every push
 └── Makefile                  # make train / make test / make serve
 ```
+## Getting the real data
+
+This pipeline is built and tuned against the real **GSE33000** series matrix
+file (verified against the actual downloaded file, not assumed). To
+reproduce it:
+
+1. Download the series matrix file from
+   [GSE33000 on NCBI GEO](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE33000)
+   — under "Download family," click **Series Matrix File(s)**, then download
+   the `.txt.gz` file.
+2. Unzip it: `gunzip GSE33000_series_matrix.txt.gz`
+3. Place the unzipped `.txt` file at:
+data/toydata_raw/GSE33000_series_matrix.txt
+(this exact path is what `configs/config.yaml`'s `data.geo_path` expects
+   — if you place it elsewhere, update that config value to match)
+4. Confirm `configs/config.yaml` has:
+```yaml
+   data:
+     source: "geo_series_matrix"
+     geo_path: "data/toydata_raw/GSE33000_series_matrix.txt"
+```
+5. Run `python -m src.pipeline`
 
 ## Running it
 
