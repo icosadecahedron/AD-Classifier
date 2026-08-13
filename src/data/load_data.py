@@ -52,14 +52,6 @@ def _generate_synthetic_expression_data(
 
 
 def _load_geo_series_matrix(path: str, label_col: str) -> tuple[pd.DataFrame, pd.Series]:
-    """Parse a real GEO series matrix file into (expression_df, labels).
-
-    GEO series matrix files are tab-delimited with metadata rows prefixed by
-    '!' and a data table between '!series_matrix_table_begin' and
-    '!series_matrix_table_end'. This is a minimal parser; adjust the
-    label-extraction logic to match the specific characteristic field used
-    in the series you download (e.g. '!Sample_characteristics_ch1').
-    """
     path_obj = Path(path)
     if not path_obj.exists():
         raise FileNotFoundError(
@@ -70,12 +62,52 @@ def _load_geo_series_matrix(path: str, label_col: str) -> tuple[pd.DataFrame, pd
     with open(path_obj) as f:
         lines = f.readlines()
 
+    def _parse_geo_row(line: str) -> list[str]:
+        """Split a '!Sample_xxx\t"val1"\t"val2"...' line into stripped values."""
+        parts = line.rstrip("\n").split("\t")[1:]
+        return [p.strip('"') for p in parts]
+
+    gsm_line = next(l for l in lines if l.startswith("!Sample_geo_accession"))
+    gsm_order = _parse_geo_row(gsm_line)
+
+    disease_status_line = next(
+        l for l in lines
+        if l.startswith("!Sample_characteristics_ch2") and "disease status" in l.lower()
+    )
+    raw_statuses = _parse_geo_row(disease_status_line)
+    statuses = [v.split(": ", 1)[1] if ": " in v else v for v in raw_statuses]
+    gsm_to_status = dict(zip(gsm_order, statuses))
+
+    keep_gsms = {
+        gsm for gsm, status in gsm_to_status.items()
+        if status in ("Alzheimer's disease", "non-demented")
+    }
+    label_map = {"Alzheimer's disease": 1, "non-demented": 0}
+
     start = next(i for i, l in enumerate(lines) if l.startswith("!series_matrix_table_begin"))
     end = next(i for i, l in enumerate(lines) if l.startswith("!series_matrix_table_end"))
     table_lines = lines[start + 1 : end]
 
     from io import StringIO
 
+    raw_table = pd.read_csv(StringIO("".join(table_lines)), sep="\t", index_col=0)
+    kept_columns = [c for c in raw_table.columns if c in keep_gsms]
+    filtered_table = raw_table[kept_columns]
+
+    expr_df = filtered_table.T
+    expr_df.index.name = "sample_id"
+    expr_df = expr_df.reset_index().rename(columns={"sample_id": "sample_id"})
+    expr_df["sample_id"] = kept_columns
+
+    labels = pd.Series(
+        [label_map[gsm_to_status[gsm]] for gsm in kept_columns], name=label_col
+    )
+
+    logger.info(
+        "Loaded real GSE33000 data: %d samples (dropped %d Huntington's disease samples), %d probes",
+        len(kept_columns), len(gsm_order) - len(keep_gsms), filtered_table.shape[0],
+    )
+    return expr_df, labels
 
 
 
