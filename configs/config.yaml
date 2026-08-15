@@ -1,6 +1,6 @@
 data:
   source: "geo_series_matrix"          # "synthetic" or "geo_series_matrix"
-  geo_path: "data/raw/GSE33000_series_matrix.txt"
+  geo_path: "data/toydata_raw/GSE33000_series_matrix.txt"
   n_samples: 600
   n_genes: 2000
   random_seed: 42
