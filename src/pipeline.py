@@ -32,7 +32,7 @@ def main():
 
     logger.info("Step 1/5: Loading dataset...")
     expr_df, labels = load_dataset(config)
-    logger.info("Loaded %d samples x %d genes", expr_df.shape[0], expr_df.shape[1] - 1)
+    logger.info("Loaded %d samples x %d genes", expr_df.shape[0], expr_df.shape[1])
 
     logger.info("Step 2/5: Splitting train/test data...")
 
