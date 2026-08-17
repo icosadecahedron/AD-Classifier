@@ -1,14 +1,4 @@
-"""
-Model training: benchmarks multiple classifiers with stratified CV,
-logs every run to MLflow (if installed), and persists the best model +
-selected gene list.
 
-xgboost and mlflow are optional at import time so this pipeline still runs
-in restricted/offline environments (falls back to GradientBoostingClassifier
-and plain logging respectively). Install both from requirements.txt for the
-full intended experience -- MLflow experiment tracking and XGBoost as one of
-the benchmarked models.
-"""
 from __future__ import annotations
 
 import logging
